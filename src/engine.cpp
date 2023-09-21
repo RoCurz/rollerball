@@ -4,6 +4,8 @@
 #include <climits>
 #include "board.hpp"
 #include "engine.hpp"
+
+
 int evaluation(const Board& board){
     std::string board_string = board_to_str(board.data.board_0);
     int n = board_string.size();
@@ -33,45 +35,52 @@ int evaluation(const Board& board){
         }
     }
     int ans;
-    if(board.data.player_to_play==1<<6){
-        ans = w_p+5*w_r+3*w_b-b_p-5*b_r-3*b_b;
-        if (board.in_check()){
-            ans-=10;
-        }
-        auto move_s = board.get_legal_moves();
-        std::vector<U16> moves(move_s.begin(),move_s.end());
-        ans+=moves.size()/100;
-        // if (moves.size()==0){
-        //     ans = -float('inf');
-        // }
+    ans = 100*(w_r-b_r)+80*(w_b-b_b)+(w_p-b_p);
+    if (board.in_check()){
+        ans-=100;
+    }
+    auto move_s = board.get_legal_moves();
+    std::vector<U16> moves(move_s.begin(),move_s.end());
+    ans+=moves.size()/100;
+    // if(board.data.player_to_play==1<<6){
+    //     ans = w_p+5*w_r+3*w_b-b_p-5*b_r-3*b_b;
+    //     if (board.in_check()){
+    //         ans-=10;
+    //     }
+    //     auto move_s = board.get_legal_moves();
+    //     std::vector<U16> moves(move_s.begin(),move_s.end());
+    //     ans+=moves.size()/100;
+    //     // if (moves.size()==0){
+    //     //     ans = -float('inf');
+    //     // }
         
         
-    }
-    else{
-        ans = (w_p+5*w_r+3*w_b-b_p-5*b_r-3*b_b);
-        if (board.in_check()){
-            ans-=10;
-        }
-        auto move_s = board.get_legal_moves();
-        std::vector<U16> moves(move_s.begin(),move_s.end());
-        ans+=moves.size()/100;
-        // if (moves.size()==0){
-        //     ans = -float('inf');
-        // }
-    }
+    // }
+    // else{
+    //     ans = (w_p+5*w_r+3*w_b-b_p-5*b_r-3*b_b);
+    //     if (board.in_check()){
+    //         ans-=10;
+    //     }
+    //     auto move_s = board.get_legal_moves();
+    //     std::vector<U16> moves(move_s.begin(),move_s.end());
+    //     ans+=moves.size()/100;
+    //     // if (moves.size()==0){
+    //     //     ans = -float('inf');
+    //     // }
+    // }
     return ans;
 }
 
 int minmax(const Board& board, int depth, int alpha, int beta) 
     {
-        if (depth == 0) {
+        auto move_s = board.get_legal_moves();
+        std::vector<U16> moves(move_s.begin(),move_s.end());
+        if (depth == 0 || moves.size()==0) {
             return evaluation(board);
         }
 
         if (board.data.player_to_play == (1 << 6)) {
             int maxEval = INT_MIN;
-            auto move_s = board.get_legal_moves();
-            std::vector<U16> moves(move_s.begin(),move_s.end());
             for (size_t i = 0; i < moves.size(); i++) {
                 Board b = *board.copy();  // Create a copy of the board
                 b.do_move(moves[i]);
@@ -86,8 +95,6 @@ int minmax(const Board& board, int depth, int alpha, int beta)
             return maxEval;
         } else {
             int minEval = INT_MAX;
-            auto move_s = board.get_legal_moves();
-            std::vector<U16> moves(move_s.begin(),move_s.end());
             for (size_t i = 0; i < moves.size(); i++) {
                 Board b = *board.copy();  // Create a copy of the board
                 b.do_move(moves[i]);
