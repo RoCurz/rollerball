@@ -36,15 +36,23 @@ int evaluation(const Board& board){
     }
     int ans;
     ans = 100*(w_r-b_r)+80*(w_b-b_b)+(w_p-b_p);
-    if (board.data.player_to_play==1<<5){
+    if (board.data.player_to_play==(PlayerColor)BLACK){
         ans *= -1;
     }
     if (board.in_check()){
-        ans-=100;
+        ans-=500;
     }
     auto move_s = board.get_legal_moves();
     std::vector<U16> moves(move_s.begin(),move_s.end());
     ans+=moves.size();
+    Board dummyboard = *board.copy();
+    dummyboard.do_move(0);
+    if (board.in_check()){
+        ans+=10000000;
+    }
+    auto move_s_dummy = dummyboard.get_legal_moves();
+    std::vector<U16> moves_dummy(move_s_dummy.begin(),move_s_dummy.end());
+    ans -= moves_dummy.size();
     // if(board.data.player_to_play==1<<6){
     //     ans = w_p+5*w_r+3*w_b-b_p-5*b_r-3*b_b;
     //     if (board.in_check()){
