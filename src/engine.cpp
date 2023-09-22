@@ -4,12 +4,52 @@
 #include <climits>
 #include "board.hpp"
 #include "engine.hpp"
+#include <chrono>
 
 
 int evaluation(const Board& board){
     std::string board_string = board_to_str(board.data.board_0);
     int n = board_string.size();
     int w_p = 0, w_r = 0, w_b = 0, b_p = 0, b_r = 0, b_b = 0;
+    // std::vector<U8> pieces = {board.data.b_rook_ws,board.data.b_rook_bs,board.data.b_bishop,board.data.b_pawn_bs,board.data.b_rook_ws,
+    //                         board.data.w_rook_ws,board.data.w_rook_bs,board.data.w_bishop,board.data.w_pawn_bs,board.data.w_rook_ws};
+
+    // for (int i = 0; i < 12; i++)
+    // {   
+    //     if (pieces[i]==DEAD){
+    //             continue;
+    //         }
+    //     if ((board.data.board_0[pieces[i]] & (BLACK|WHITE)) == WHITE){
+    //         if ((board.data.board_0[pieces[i]] & ROOK) == ROOK)
+    //         {
+    //             w_r+=1;
+    //         }
+    //         else if ((board.data.board_0[pieces[i]] & BISHOP) == BISHOP)
+    //         {
+    //             w_b+=1;
+    //         }
+    //         else if ((board.data.board_0[pieces[i]] & PAWN) == PAWN)
+    //         {
+    //             w_p+=1;
+    //         }
+    //     }
+    //     else
+    //     {
+    //         if ((board.data.board_0[pieces[i]] & ROOK) == ROOK)
+    //         {
+    //             b_r+=1;
+    //         }
+    //         else if ((board.data.board_0[pieces[i]] & BISHOP) == BISHOP)
+    //         {
+    //             b_b+=1;
+    //         }
+    //         else if ((board.data.board_0[pieces[i]] & PAWN) == PAWN)
+    //         {
+    //             b_p+=1;
+    //         }
+    //     }
+        
+    // }
     for (int i=0;i<n;i++){
         switch (board_string[i]) {
             case 'P':
@@ -40,7 +80,7 @@ int evaluation(const Board& board){
         ans *= -1;
     }
     if (board.in_check()){
-        ans-=500;
+        ans-=100;
     }
     auto move_s = board.get_legal_moves();
     std::vector<U16> moves(move_s.begin(),move_s.end());
@@ -48,11 +88,14 @@ int evaluation(const Board& board){
     Board dummyboard = *board.copy();
     dummyboard.do_move(0);
     if (board.in_check()){
-        ans+=100000;
+        ans+=1000;
     }
     auto move_s_dummy = dummyboard.get_legal_moves();
     std::vector<U16> moves_dummy(move_s_dummy.begin(),move_s_dummy.end());
     ans -= moves_dummy.size();
+    if (moves_dummy.size()==0){
+        ans -= 1000000;
+    }
     // if(board.data.player_to_play==1<<6){
     //     ans = w_p+5*w_r+3*w_b-b_p-5*b_r-3*b_b;
     //     if (board.in_check()){
@@ -123,7 +166,7 @@ int minmax(const Board& board, int depth, int alpha, int beta)
 void Engine::find_best_move(const Board& b) {
 
     // pick a random move
-    
+    auto start_time = std::chrono::high_resolution_clock::now();
     auto moveset = b.get_legal_moves();
     std::vector<U16> moves(moveset.begin(),moveset.end());
     int opt_move = 0;
@@ -133,7 +176,7 @@ void Engine::find_best_move(const Board& b) {
     for (int i=0;i<moves.size();i++){
         auto b_copy = *b.copy();
         b_copy.do_move(moves[i]);
-        int x = minmax(b_copy,4,INT_MIN,INT_MAX);
+        int x = minmax(b_copy,3,INT_MIN,INT_MAX);
         if (x>opt_val){
             opt_val=x;
             opt_move=i;
@@ -154,7 +197,11 @@ void Engine::find_best_move(const Board& b) {
 
     // }
     this->best_move = moves[opt_move];
-    
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+    // Output the elapsed time
+    std::cout << "Time taken by function: " << duration.count() << " seconds" << std::endl;
     // if (moveset.size() == 0) {
     //     this->best_move = 0;
     // }
