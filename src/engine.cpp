@@ -35,7 +35,7 @@ int evaluation(const Board& board){
         }
     }
     int ans;
-    ans = 100*(w_r-b_r)+80*(w_b-b_b)+(w_p-b_p);
+    ans = 100*(w_r-b_r)+80*(w_b-b_b)+40*(w_p-b_p);
     if (board.data.player_to_play==(PlayerColor)BLACK){
         ans *= -1;
     }
@@ -48,7 +48,7 @@ int evaluation(const Board& board){
     Board dummyboard = *board.copy();
     dummyboard.do_move(0);
     if (board.in_check()){
-        ans+=10000000;
+        ans+=100000;
     }
     auto move_s_dummy = dummyboard.get_legal_moves();
     std::vector<U16> moves_dummy(move_s_dummy.begin(),move_s_dummy.end());
@@ -90,7 +90,7 @@ int minmax(const Board& board, int depth, int alpha, int beta)
             return evaluation(board);
         }
 
-        if (board.data.player_to_play == (1 << 6)) {
+        if (depth%2 == 1) {
             int maxEval = INT_MIN;
             for (size_t i = 0; i < moves.size(); i++) {
                 Board b = *board.copy();  // Create a copy of the board
