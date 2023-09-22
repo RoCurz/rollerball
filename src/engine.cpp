@@ -127,32 +127,32 @@ void Engine::find_best_move(const Board& b) {
     auto moveset = b.get_legal_moves();
     std::vector<U16> moves(moveset.begin(),moveset.end());
     int opt_move = 0;
-    if (b.data.player_to_play==(1<<6)){
+    // if (b.data.player_to_play==(1<<6)){
         
-        int opt_val = INT_MIN;
-        for (int i=0;i<moves.size();i++){
-            auto b_copy = *b.copy();
-            b_copy.do_move(moves[i]);
-            int x = minmax(b_copy,3,INT_MIN,INT_MAX);
-            if (x>opt_val){
-                opt_val=x;
-                opt_move=i;
-            }
+    int opt_val = INT_MIN;
+    for (int i=0;i<moves.size();i++){
+        auto b_copy = *b.copy();
+        b_copy.do_move(moves[i]);
+        int x = minmax(b_copy,4,INT_MIN,INT_MAX);
+        if (x>opt_val){
+            opt_val=x;
+            opt_move=i;
         }
     }
-    else{
-        int opt_val = INT_MAX;
-        for (int i=0;i<moves.size();i++){
-            auto b_copy = *b.copy();
-            b_copy.do_move(moves[i]);
-            int x = minmax(b_copy,3,INT_MIN,INT_MAX);
-            if (x<opt_val){
-                opt_val=x;
-                opt_move=i;
-            }
-        }
+    // }
+    // else{
+    //     int opt_val = INT_MAX;
+    //     for (int i=0;i<moves.size();i++){
+    //         auto b_copy = *b.copy();
+    //         b_copy.do_move(moves[i]);
+    //         int x = minmax(b_copy,3,INT_MIN,INT_MAX);
+    //         if (x<opt_val){
+    //             opt_val=x;
+    //             opt_move=i;
+    //         }
+    //     }
 
-    }
+    // }
     this->best_move = moves[opt_move];
     
     // if (moveset.size() == 0) {
