@@ -6,6 +6,8 @@
 #include "engine.hpp"
 #include <chrono>
 
+int duration;
+U16 last_move;
 
 int evaluation(const Board& board){
     std::string board_string = board_to_str(board.data.board_0);
@@ -47,8 +49,7 @@ int evaluation(const Board& board){
     //         {
     //             b_p+=1;
     //         }
-    //     }
-        
+    //     }  
     // }
     for (int i=0;i<n;i++){
         switch (board_string[i]) {
@@ -80,7 +81,7 @@ int evaluation(const Board& board){
         ans *= -1;
     }
     if (board.in_check()){
-        ans-=100;
+        ans -= 40;
     }
     auto move_s = board.get_legal_moves();
     std::vector<U16> moves(move_s.begin(),move_s.end());
@@ -88,13 +89,13 @@ int evaluation(const Board& board){
     Board dummyboard = *board.copy();
     dummyboard.do_move(0);
     if (board.in_check()){
-        ans+=1000;
+        ans += 60;
     }
     auto move_s_dummy = dummyboard.get_legal_moves();
     std::vector<U16> moves_dummy(move_s_dummy.begin(),move_s_dummy.end());
     ans -= moves_dummy.size();
     if (moves_dummy.size()==0){
-        ans -= 1000000;
+        ans += 100000;
     }
     // if(board.data.player_to_play==1<<6){
     //     ans = w_p+5*w_r+3*w_b-b_p-5*b_r-3*b_b;
@@ -104,11 +105,9 @@ int evaluation(const Board& board){
     //     auto move_s = board.get_legal_moves();
     //     std::vector<U16> moves(move_s.begin(),move_s.end());
     //     ans+=moves.size()/100;
-    //     // if (moves.size()==0){
-    //     //     ans = -float('inf');
-    //     // }
-        
-        
+    //     if (moves.size()==0){
+    //         ans = -float('inf');
+    //     }      
     // }
     // else{
     //     ans = (w_p+5*w_r+3*w_b-b_p-5*b_r-3*b_b);
@@ -125,34 +124,34 @@ int evaluation(const Board& board){
     return ans;
 }
 
-int minmax(const Board& board, int depth, int alpha, int beta) 
+int minmax(const Board& board, int depth, int alpha, int beta, std::atomic<bool>& search) 
     {
+        if (depth == 0 || !search) {
+            int eval = evaluation(board);
+            // std::cout << "value of board" << eval << std::endl;
+            return eval;
+        }
         auto move_s = board.get_legal_moves();
         std::vector<U16> moves(move_s.begin(),move_s.end());
-        if (depth == 0 || moves.size()==0) {
-            return evaluation(board);
-        }
-
-        if (depth%2 == 1) {
+        if (depth%2 == 0) {
             int maxEval = INT_MIN;
             for (size_t i = 0; i < moves.size(); i++) {
                 Board b = *board.copy();  // Create a copy of the board
                 b.do_move(moves[i]);
-                int ans = minmax(b, depth - 1, alpha, beta);
+                int ans = minmax(b, depth - 1, alpha, beta,search);
                 maxEval = std::max(ans, maxEval);
                 alpha = std::max(alpha, ans);
                 if (beta <= alpha) {
                     break;
                 }
             }
-
             return maxEval;
         } else {
             int minEval = INT_MAX;
             for (size_t i = 0; i < moves.size(); i++) {
                 Board b = *board.copy();  // Create a copy of the board
                 b.do_move(moves[i]);
-                int ans = minmax(b, depth - 1, alpha, beta);
+                int ans = minmax(b, depth - 1, alpha, beta,search);
                 minEval = std::min(ans, minEval);
                 beta = std::min(beta, ans);
                 if (beta <= alpha) {
@@ -163,20 +162,39 @@ int minmax(const Board& board, int depth, int alpha, int beta)
             return minEval;
         }
     }
-void Engine::find_best_move(const Board& b) {
 
-    // pick a random move
+void Engine::find_best_move(const Board& b) {
     auto start_time = std::chrono::high_resolution_clock::now();
     auto moveset = b.get_legal_moves();
     std::vector<U16> moves(moveset.begin(),moveset.end());
     int opt_move = 0;
+    U8 p0 = getp0(last_move);
+    U8 p1 = getp1(last_move);
+    U16 symmetric_move = p0 | p1<<8;
+    
     // if (b.data.player_to_play==(1<<6)){
-        
+    std::cout << "last move\t"<< move_to_str(last_move)<<std::endl;
+    std::cout << "symmetric move\t"<< move_to_str(symmetric_move)<<std::endl;
     int opt_val = INT_MIN;
     for (int i=0;i<moves.size();i++){
+        int x;
         auto b_copy = *b.copy();
-        b_copy.do_move(moves[i]);
-        int x = minmax(b_copy,3,INT_MIN,INT_MAX);
+        if (moves[i] == symmetric_move){
+            x = -20;
+            std::cout << "value of move\t"<< move_to_str(moves[i])<< "\t" << x << std::endl;
+        }
+        if (moves.size()>6){
+            b_copy.do_move(moves[i]);
+            x = minmax(b_copy,3,INT_MIN,INT_MAX,search);
+            std::cout << "value of move\t"<< move_to_str(moves[i])<< "\t" << x << std::endl;
+        }
+        else
+        {
+            b_copy.do_move(moves[i]);
+            x = minmax(b_copy,5,INT_MIN,INT_MAX,search);
+            std::cout << "value of move\t"<< move_to_str(moves[i])<< "\t" << x << std::endl;
+        }
+        
         if (x>opt_val){
             opt_val=x;
             opt_move=i;
@@ -194,14 +212,14 @@ void Engine::find_best_move(const Board& b) {
     //             opt_move=i;
     //         }
     //     }
-
     // }
     this->best_move = moves[opt_move];
+    last_move = moves[opt_move];
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
     // Output the elapsed time
-    std::cout << "Time taken by function: " << duration.count() << " seconds" << std::endl;
+    std::cout << "Time taken by function: " << duration.count() << " milliseconds" << std::endl;
     // if (moveset.size() == 0) {
     //     this->best_move = 0;
     // }
