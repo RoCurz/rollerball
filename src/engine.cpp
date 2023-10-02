@@ -76,24 +76,24 @@ int evaluation(const Board& board){
         }
     }
     int ans;
-    ans = 100*(w_r-b_r)+80*(w_b-b_b)+40*(w_p-b_p);
+    ans = 1000*(w_r-b_r)+600*(w_b-b_b)+100*(w_p-b_p);
     if (board.data.player_to_play==(PlayerColor)BLACK){
         ans *= -1;
     }
     if (board.in_check()){
-        ans -= 40;
+        ans -= 300;
     }
     auto move_s = board.get_legal_moves();
     std::vector<U16> moves(move_s.begin(),move_s.end());
-    ans+=moves.size();
+    ans += 5*moves.size();
     Board dummyboard = *board.copy();
     dummyboard.do_move(0);
     if (board.in_check()){
-        ans += 60;
+        ans += 300;
     }
     auto move_s_dummy = dummyboard.get_legal_moves();
     std::vector<U16> moves_dummy(move_s_dummy.begin(),move_s_dummy.end());
-    ans -= moves_dummy.size();
+    ans -= 5*moves_dummy.size();
     if (moves_dummy.size()==0){
         ans += 100000;
     }
